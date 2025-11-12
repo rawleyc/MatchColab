@@ -4,16 +4,26 @@ import { createClient } from "@supabase/supabase-js";
 
 const router = express.Router();
 
-// --- Initialize OpenAI ---
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// --- Helper function to get OpenAI client (lazy initialization) ---
+const getOpenAIClient = () => {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error("OPENAI_API_KEY is not set in environment variables");
+  }
+  return new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
+};
 
-// --- Initialize Supabase ---
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY
-);
+// --- Helper function to get Supabase client (lazy initialization) ---
+const getSupabaseClient = () => {
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
+    throw new Error("SUPABASE_URL or SUPABASE_SERVICE_KEY is not set in environment variables");
+  }
+  return createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_KEY
+  );
+};
 
 // --- Main /match endpoint ---
 router.post("/", async (req, res) => {
@@ -22,6 +32,10 @@ router.post("/", async (req, res) => {
     if (!tags || tags.trim() === "") {
       return res.status(400).json({ error: "Tags are required" });
     }
+
+    // Get clients (initialized with env vars)
+    const openai = getOpenAIClient();
+    const supabase = getSupabaseClient();
 
     // 1️⃣ Generate embedding for the input tags
     const embeddingResponse = await openai.embeddings.create({
