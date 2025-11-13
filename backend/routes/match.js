@@ -28,45 +28,81 @@ const getSupabaseClient = () => {
 // --- Main /match endpoint ---
 router.post("/", async (req, res) => {
   try {
-    const { tags } = req.body;
-    if (!tags || tags.trim() === "") {
+    const {
+      tags,
+      top_n = 10,
+      only_successful = false,
+      min_similarity = 0.3,
+      persist_artist = false,
+      artist_name = null
+    } = req.body;
+
+    if (!tags || !tags.trim()) {
       return res.status(400).json({ error: "Tags are required" });
     }
 
-    // Get clients (initialized with env vars)
     const openai = getOpenAIClient();
     const supabase = getSupabaseClient();
 
-    // 1️⃣ Generate embedding for the input tags
-    const embeddingResponse = await openai.embeddings.create({
+    // 1️⃣ Generate embedding for input tags
+    const embeddingResp = await openai.embeddings.create({
       model: "text-embedding-3-small",
-      input: tags,
+      input: tags
     });
+    const embedding = embeddingResp.data[0].embedding;
 
-    const [{ embedding }] = embeddingResponse.data;
+    // 2️⃣ (Optional) Persist querying artist so future matches can include them
+    if (persist_artist && artist_name) {
+      const { error: upsertError } = await supabase
+        .from("artists")
+        .upsert({ artist_name, artist_tags: tags, embedding }, { onConflict: "artist_name" });
+      if (upsertError) {
+        console.warn("Upsert warning:", upsertError.message);
+      }
+    }
 
-    // 2️⃣ Query Supabase for the most similar artists
-    const { data, error } = await supabase.rpc("match_artists", {
+    // 3️⃣ Call ranking function
+    const { data, error } = await supabase.rpc("rank_artists_by_embedding", {
       query_embedding: embedding,
-      match_threshold: 0.75, // similarity threshold (0–1)
-      match_count: 5,        // return top 5 matches
+      only_successful_collabs: only_successful,
+      match_count: top_n,
+      min_semantic_similarity: min_similarity
     });
 
     if (error) {
       console.error("Supabase RPC error:", error);
-      return res.status(500).json({ error: "Supabase query failed" });
+      return res.status(500).json({
+        error: "Matching failed",
+        details: error.message
+      });
     }
 
-    // 3️⃣ Return clean response
-    res.json({
-      matches: data || [],
-      count: data?.length || 0,
-    });
+    // 4️⃣ Decorate results with recommendation label
+    const matches = (data || []).map(row => ({
+      ...row,
+      recommendation: recommendationLabel(row.final_score)
+    }));
 
-  } catch (err) {
-    console.error("Error in /match:", err);
-    res.status(500).json({ error: "Server error" });
+    res.json({
+      user_tags: tags,
+      parameters: {
+        top_n,
+        only_successful,
+        min_similarity
+      },
+      matches,
+      total_matches: matches.length
+    });
+  } catch (e) {
+    console.error("Error in /match:", e);
+    res.status(500).json({ error: "Server error", message: e.message });
   }
 });
+
+function recommendationLabel(score) {
+  if (score >= 0.7) return "HIGHLY RECOMMENDED - Strong compatibility!";
+  if (score >= 0.5) return "GOOD MATCH - Moderate compatibility";
+  return "RISKY - Lower compatibility, but could be innovative";
+}
 
 export default router;
