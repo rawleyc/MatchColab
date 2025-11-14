@@ -1,6 +1,194 @@
+# MatchColab - Artist Collaboration Matchmaker
+
+A full-stack application that helps artists find the perfect collaborators based on their music style using AI embeddings and historical collaboration data.
+
+## 🌟 Features
+
+### Web Application
+- **Modern Frontend UI**: Beautiful, responsive interface with real-time health monitoring
+- **AI-Powered Matching**: Uses OpenAI embeddings to find semantically similar artists
+- **Historical Analysis**: Leverages past collaboration success/failure data
+- **Advanced Filtering**: Customize results by similarity threshold and success rate
+- **Artist Profiles**: Save your profile for future matching
+
+### API Endpoints
+- `GET /` - Web interface
+- `GET /health` - System health check with database and API verification
+- `POST /match` - Find artist matches based on style tags
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Node.js 20.x
+- Supabase account (for database)
+- OpenAI API key
+
+### Installation
+
+1. **Clone the repository**
+```bash
+git clone https://github.com/rawleyc/MatchColab.git
+cd MatchColab
+```
+
+2. **Install backend dependencies**
+```bash
+cd backend
+npm install
+```
+
+3. **Set up environment variables**
+
+Create a `.env` file in the root directory:
+```env
+OPENAI_API_KEY=your_openai_api_key
+SUPABASE_URL=your_supabase_url
+SUPABASE_SERVICE_KEY=your_supabase_service_key
+PORT=5000
+CORS_ORIGIN=  # Optional: comma-separated allowed origins for production
+```
+
+4. **Start the server**
+```bash
+npm run dev  # Development with auto-reload
+# or
+npm start    # Production
+```
+
+5. **Open your browser**
+
+Navigate to `http://localhost:5000`
+
+## 📖 Usage
+
+### Web Interface
+
+1. Enter your music style tags (e.g., "pop, r&b, contemporary r&b")
+2. Adjust parameters:
+   - Number of results (1-50)
+   - Minimum similarity threshold (0-1)
+   - Filter by successful collaborations only
+3. Optionally save your artist profile
+4. Click "Find Matches" to get recommendations
+
+### API Usage
+
+**Find Matches:**
+```bash
+curl -X POST http://localhost:5000/match \
+  -H "Content-Type: application/json" \
+  -d '{
+    "tags": "pop, r&b",
+    "top_n": 10,
+    "min_similarity": 0.3,
+    "only_successful": false,
+    "artist_name": "Your Name",
+    "persist_artist": false
+  }'
+```
+
+**Check Health:**
+```bash
+curl http://localhost:5000/health
+```
+
+## 🏗️ Architecture
+
+### Backend (`/backend`)
+- **Express.js** server with RESTful API
+- **Supabase** for vector database and collaboration history
+- **OpenAI** embeddings for semantic similarity
+- Static file serving for frontend
+
+### Frontend (`/frontend`)
+- Pure HTML/CSS/JavaScript (no build required)
+- Modern dark theme with responsive design
+- Real-time health monitoring
+- Smooth animations and transitions
+
+### Database Schema
+- **artists** table: Artist profiles with embeddings
+- **maindb** table: Historical collaboration records
+- **rank_artists_by_embedding** function: Vector similarity search
+
+## 📊 Scoring System
+
+The matching algorithm combines two key factors:
+
+1. **Semantic Similarity (60%)**: Cosine similarity between tag embeddings
+2. **Historical Success Rate (40%)**: Based on past collaboration outcomes
+
+**Recommendation Levels:**
+- **≥ 0.7**: HIGHLY RECOMMENDED - Strong compatibility
+- **0.5-0.7**: GOOD MATCH - Moderate compatibility  
+- **< 0.5**: RISKY - Lower compatibility, but innovative potential
+
+## 📁 Project Structure
+
+```
+MatchColab/
+├── backend/
+│   ├── server.js           # Express server & routes
+│   ├── routes/
+│   │   └── match.js        # Match endpoint logic
+│   └── package.json
+├── frontend/
+│   ├── index.html          # Web UI
+│   ├── styles.css          # Styling
+│   ├── app.js              # Frontend logic
+│   └── README.md           # Frontend documentation
+├── data/                   # Dataset files
+├── scripts/                # Data generation scripts
+└── README.md               # This file
+```
+
+## 🚢 Deployment
+
+See [DEPLOY_RENDER.md](DEPLOY_RENDER.md) for detailed deployment instructions on Render.
+
+### Quick Deploy to Render
+
+1. Connect your GitHub repository
+2. Set environment variables in Render dashboard
+3. Deploy using the included `render.yaml` blueprint
+4. Health checks run automatically at `/health`
+
+## 🔧 Development
+
+### Running Tests
+```bash
+cd backend
+npm test
+```
+
+### Environment Setup
+- Node.js 20.x required
+- All dependencies managed via npm
+- Environment variables in `.env` (never commit this file)
+
+## 📚 Additional Documentation
+
+- [Frontend Documentation](frontend/README.md)
+- [Deployment Guide](DEPLOY_RENDER.md)
+- [Matchmaker System Details](MATCHMAKER_README.md)
+- [Database Setup](PGVECTOR_GUIDE.md)
+
+## 🛡️ Security
+
+- Never commit `.env` files
+- Use `SUPABASE_SERVICE_KEY` only on backend
+- Set `CORS_ORIGIN` in production to restrict frontend access
+- Rotate API keys regularly
+
+## 📄 License
+
+MIT
+
+---
+
 # Artist Collaboration Dataset Generator
 
-This project generates a CSV dataset of artist collaborations labeled by success, with tags and optional metadata.
+This project also includes tools to generate CSV datasets of artist collaborations labeled by success, with tags and optional metadata.
 
 Deliverable: `data/artist_collaborations.csv` (synthetic demo, UTF-8) and `data/artist_collaborations_factual.csv` (built from live sources when configured)
 
