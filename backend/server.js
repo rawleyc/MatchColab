@@ -31,14 +31,61 @@ app.use(cors(corsOptions));
 app.use(express.json()); // parses JSON in request body
 app.use(morgan("dev"));  // logs requests in the console
 
+// Serve static frontend files
+app.use(express.static(path.join(__dirname, "..", "frontend")));
+
 // --- Base route ---
 app.get("/", (req, res) => {
-  res.json({ message: "MatchColab API is running 🚀" });
+  // Serve the frontend if accessed from browser
+  res.sendFile(path.join(__dirname, "..", "frontend", "index.html"));
 });
 
 // --- Health check route for Render ---
-app.get("/health", (req, res) => {
-  res.json({ status: "ok" });
+app.get("/health", async (req, res) => {
+  const health = {
+    status: "ok",
+    timestamp: new Date().toISOString(),
+    checks: {
+      server: "ok",
+      database: "unknown",
+      openai: "unknown"
+    }
+  };
+
+  try {
+    // Check Supabase connection
+    if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY) {
+      const { createClient } = await import("@supabase/supabase-js");
+      const supabase = createClient(
+        process.env.SUPABASE_URL,
+        process.env.SUPABASE_SERVICE_KEY
+      );
+      
+      // Simple query to verify database connection
+      const { error } = await supabase.from("artists").select("count", { count: "exact", head: true });
+      health.checks.database = error ? `error: ${error.message}` : "ok";
+    } else {
+      health.checks.database = "not_configured";
+    }
+
+    // Check OpenAI API key presence
+    if (process.env.OPENAI_API_KEY) {
+      health.checks.openai = "configured";
+    } else {
+      health.checks.openai = "not_configured";
+    }
+
+    // Overall status
+    const allOk = Object.values(health.checks).every(v => v === "ok" || v === "configured");
+    health.status = allOk ? "ok" : "degraded";
+
+    const statusCode = health.status === "ok" ? 200 : 503;
+    res.status(statusCode).json(health);
+  } catch (error) {
+    health.status = "error";
+    health.error = error.message;
+    res.status(503).json(health);
+  }
 });
 
 // --- Match route ---
