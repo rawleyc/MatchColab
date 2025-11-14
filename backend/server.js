@@ -21,13 +21,87 @@ import matchRoutes from "./routes/match.js";
 const app = express();
 
 // --- Middleware setup ---
-app.use(cors());
+// Configure CORS: allow all in dev; allowlist via CORS_ORIGIN (comma-separated) in prod
+const allowedOrigins = (process.env.CORS_ORIGIN || "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+const corsOptions = allowedOrigins.length ? { origin: allowedOrigins } : {};
+app.use(cors(corsOptions));
 app.use(express.json()); // parses JSON in request body
 app.use(morgan("dev"));  // logs requests in the console
 
+// Serve static frontend files
+app.use(express.static(path.join(__dirname, "..", "frontend")));
+
 // --- Base route ---
 app.get("/", (req, res) => {
-  res.json({ message: "MatchColab API is running 🚀" });
+  // Serve the frontend if accessed from browser
+  res.sendFile(path.join(__dirname, "..", "frontend", "index.html"));
+});
+
+// --- Health check route for Render ---
+app.get("/health", async (req, res) => {
+  const health = {
+    status: "ok",
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    checks: {
+      server: "ok",
+      database: "unknown",
+      openai: "unknown"
+    }
+  };
+
+  try {
+    // Check Supabase connection
+    if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY) {
+      try {
+        const { createClient } = await import("@supabase/supabase-js");
+        const supabase = createClient(
+          process.env.SUPABASE_URL,
+          process.env.SUPABASE_SERVICE_KEY
+        );
+        
+        // Simple query to verify database connection
+        const { error, count } = await supabase
+          .from("artists")
+          .select("*", { count: "exact", head: true });
+        
+        if (error) {
+          health.checks.database = `error: ${error.message}`;
+        } else {
+          health.checks.database = "ok";
+          health.checks.database_info = { artist_count: count || 0 };
+        }
+      } catch (dbError) {
+        health.checks.database = `error: ${dbError.message}`;
+      }
+    } else {
+      health.checks.database = "not_configured";
+    }
+
+    // Check OpenAI API key presence
+    if (process.env.OPENAI_API_KEY) {
+      health.checks.openai = "configured";
+    } else {
+      health.checks.openai = "not_configured";
+    }
+
+    // Overall status
+    const allOk = Object.values(health.checks).every(v => 
+      v === "ok" || v === "configured" || typeof v === "object"
+    );
+    health.status = allOk ? "ok" : "degraded";
+
+    const statusCode = health.status === "ok" ? 200 : 503;
+    res.status(statusCode).json(health);
+  } catch (error) {
+    health.status = "error";
+    health.error = error.message;
+    health.stack = process.env.NODE_ENV === "development" ? error.stack : undefined;
+    res.status(503).json(health);
+  }
 });
 
 // --- Match route ---

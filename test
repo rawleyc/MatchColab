@@ -1,0 +1,36 @@
+
+  with success_rates as (
+    -- Calculate each artist’s historical success rate
+    select
+      lower(m.artist_01) as artist_name,
+      avg(case when lower(m.collaboration_status) = 'success' then 1.0 else 0.0 end) as success_rate
+    from maindb m
+    group by lower(m.artist_01)
+    union
+    select
+      lower(m.artist_02) as artist_name,
+      avg(case when lower(m.collaboration_status) = 'success' then 1.0 else 0.0 end) as success_rate
+    from maindb m
+    group by lower(m.artist_02)
+  )
+  select
+    a.id as artist_id,
+    a.artist_name,
+    (1 - (a.embedding <=> query_embedding)) as semantic_similarity,
+    coalesce(sr.success_rate, 0.0) as historical_success,
+    ((1 - (a.embedding <=> query_embedding)) * 0.6 + coalesce(sr.success_rate, 0.0) * 0.4) as final_score
+  from artists a
+  left join success_rates sr on lower(a.artist_name) = sr.artist_name
+  where
+    (
+      only_successful_collabs = false
+      or exists (
+        select 1
+        from maindb m2
+        where
+          (lower(m2.artist_01) = lower(a.artist_name)
+          or lower(m2.artist_02) = lower(a.artist_name))
+          and lower(m2.collaboration_status) = 'success'
+      )
+    )
+  order by final_score desc;
