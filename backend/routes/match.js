@@ -37,8 +37,20 @@ router.post("/", async (req, res) => {
       artist_name = null
     } = req.body;
 
+    // Validate required fields
     if (!tags || !tags.trim()) {
       return res.status(400).json({ error: "Tags are required" });
+    }
+
+    // Validate numeric parameters
+    const topN = parseInt(top_n);
+    if (isNaN(topN) || topN < 1 || topN > 100) {
+      return res.status(400).json({ error: "top_n must be between 1 and 100" });
+    }
+
+    const minSim = parseFloat(min_similarity);
+    if (isNaN(minSim) || minSim < 0 || minSim > 1) {
+      return res.status(400).json({ error: "min_similarity must be between 0 and 1" });
     }
 
     const openai = getOpenAIClient();
@@ -47,15 +59,15 @@ router.post("/", async (req, res) => {
     // 1️⃣ Generate embedding for input tags
     const embeddingResp = await openai.embeddings.create({
       model: "text-embedding-3-small",
-      input: tags
+      input: tags.trim()
     });
     const embedding = embeddingResp.data[0].embedding;
 
     // 2️⃣ (Optional) Persist querying artist so future matches can include them
-    if (persist_artist && artist_name) {
+    if (persist_artist && artist_name && artist_name.trim()) {
       const { error: upsertError } = await supabase
         .from("artists")
-        .upsert({ artist_name, artist_tags: tags, embedding }, { onConflict: "artist_name" });
+        .upsert({ artist_name: artist_name.trim(), artist_tags: tags.trim(), embedding }, { onConflict: "artist_name" });
       if (upsertError) {
         console.warn("Upsert warning:", upsertError.message);
       }
@@ -65,8 +77,8 @@ router.post("/", async (req, res) => {
     const { data, error } = await supabase.rpc("rank_artists_by_embedding", {
       query_embedding: embedding,
       only_successful_collabs: only_successful,
-      match_count: top_n,
-      min_semantic_similarity: min_similarity
+      match_count: topN,
+      min_semantic_similarity: minSim
     });
 
     if (error) {
@@ -84,11 +96,11 @@ router.post("/", async (req, res) => {
     }));
 
     res.json({
-      user_tags: tags,
+      user_tags: tags.trim(),
       parameters: {
-        top_n,
+        top_n: topN,
         only_successful,
-        min_similarity
+        min_similarity: minSim
       },
       matches,
       total_matches: matches.length

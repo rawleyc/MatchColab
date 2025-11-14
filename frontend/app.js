@@ -36,11 +36,20 @@ function updateHealthStatus(data) {
     statusIndicator.className = `status-indicator ${status}`;
     
     if (status === 'ok') {
-        statusText.textContent = '✓ System is healthy';
+        let healthText = '✓ System is healthy';
+        
+        // Add database info if available
+        if (data.checks?.database_info?.artist_count !== undefined) {
+            healthText += ` (${data.checks.database_info.artist_count} artists in database)`;
+        }
+        
+        statusText.textContent = healthText;
     } else if (status === 'degraded') {
         const issues = [];
         if (data.checks) {
-            if (data.checks.database !== 'ok') issues.push('database');
+            if (data.checks.database !== 'ok' && typeof data.checks.database !== 'object') {
+                issues.push('database');
+            }
             if (data.checks.openai === 'not_configured') issues.push('OpenAI');
         }
         statusText.textContent = `⚠ System degraded: ${issues.join(', ')} issues`;
