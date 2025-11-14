@@ -45,6 +45,7 @@ app.get("/health", async (req, res) => {
   const health = {
     status: "ok",
     timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
     checks: {
       server: "ok",
       database: "unknown",
@@ -55,15 +56,27 @@ app.get("/health", async (req, res) => {
   try {
     // Check Supabase connection
     if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY) {
-      const { createClient } = await import("@supabase/supabase-js");
-      const supabase = createClient(
-        process.env.SUPABASE_URL,
-        process.env.SUPABASE_SERVICE_KEY
-      );
-      
-      // Simple query to verify database connection
-      const { error } = await supabase.from("artists").select("count", { count: "exact", head: true });
-      health.checks.database = error ? `error: ${error.message}` : "ok";
+      try {
+        const { createClient } = await import("@supabase/supabase-js");
+        const supabase = createClient(
+          process.env.SUPABASE_URL,
+          process.env.SUPABASE_SERVICE_KEY
+        );
+        
+        // Simple query to verify database connection
+        const { error, count } = await supabase
+          .from("artists")
+          .select("*", { count: "exact", head: true });
+        
+        if (error) {
+          health.checks.database = `error: ${error.message}`;
+        } else {
+          health.checks.database = "ok";
+          health.checks.database_info = { artist_count: count || 0 };
+        }
+      } catch (dbError) {
+        health.checks.database = `error: ${dbError.message}`;
+      }
     } else {
       health.checks.database = "not_configured";
     }
@@ -76,7 +89,9 @@ app.get("/health", async (req, res) => {
     }
 
     // Overall status
-    const allOk = Object.values(health.checks).every(v => v === "ok" || v === "configured");
+    const allOk = Object.values(health.checks).every(v => 
+      v === "ok" || v === "configured" || typeof v === "object"
+    );
     health.status = allOk ? "ok" : "degraded";
 
     const statusCode = health.status === "ok" ? 200 : 503;
@@ -84,6 +99,7 @@ app.get("/health", async (req, res) => {
   } catch (error) {
     health.status = "error";
     health.error = error.message;
+    health.stack = process.env.NODE_ENV === "development" ? error.stack : undefined;
     res.status(503).json(health);
   }
 });
