@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: matchcolab-api
+    env: node
+    region: oregon # choose closest region
+    plan: free
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: node server.js
+    autoDeploy: true
+    healthCheckPath: /health
+    # Optional: if you need persistent logs, add a disk or use Render logs
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: CORS_ORIGIN
+        # Comma-separated allowlist of origins (e.g., https://your-frontend.onrender.com,https://yourdomain.com)
+        sync: false

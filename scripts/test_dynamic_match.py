@@ -38,7 +38,7 @@ def run_test(tags: str, top_n: int = 5):
 
 if __name__ == "__main__":
     test_inputs = [
-        "pop, dance-pop, r&b",
+        " ",
         "hip hop, trap, southern hip hop",
         "electropop, synthpop, alternative pop"
     ]
