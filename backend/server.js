@@ -21,13 +21,24 @@ import matchRoutes from "./routes/match.js";
 const app = express();
 
 // --- Middleware setup ---
-app.use(cors());
+// Configure CORS: allow all in dev; allowlist via CORS_ORIGIN (comma-separated) in prod
+const allowedOrigins = (process.env.CORS_ORIGIN || "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+const corsOptions = allowedOrigins.length ? { origin: allowedOrigins } : {};
+app.use(cors(corsOptions));
 app.use(express.json()); // parses JSON in request body
 app.use(morgan("dev"));  // logs requests in the console
 
 // --- Base route ---
 app.get("/", (req, res) => {
   res.json({ message: "MatchColab API is running 🚀" });
+});
+
+// --- Health check route for Render ---
+app.get("/health", (req, res) => {
+  res.json({ status: "ok" });
 });
 
 // --- Match route ---
