@@ -1,7 +1,5 @@
-// Configuration
-const API_BASE_URL = window.location.hostname === 'localhost' 
-    ? 'http://localhost:5000' 
-    : window.location.origin;
+// Configuration - Use same origin for API calls
+const API_BASE_URL = window.location.origin;
 
 // DOM Elements
 const matchForm = document.getElementById('matchForm');
