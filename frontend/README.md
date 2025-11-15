@@ -56,9 +56,9 @@ When you submit the form with tags "pop, r&b", the frontend sends:
 }
 ```
 
-### Response Format
+### Response Format (Simplified)
 
-The API returns matched artists with scores:
+The API now returns only the blended overall score (component scores removed):
 
 ```json
 {
@@ -72,9 +72,7 @@ The API returns matched artists with scores:
     {
       "artist_name": "Ariana Grande",
       "artist_tags": "contemporary r&b, dance-pop, pop, r&b",
-      "semantic_similarity": 0.892,
-      "historical_success_rate": 0.654,
-      "final_score": 0.797,
+      "overall_score": 0.797,
       "recommendation": "HIGHLY RECOMMENDED - Strong compatibility!"
     }
   ],

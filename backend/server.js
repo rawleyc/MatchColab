@@ -31,6 +31,8 @@ app.use(cors(corsOptions));
 app.use(express.json()); // parses JSON in request body
 app.use(morgan("dev"));  // logs requests in the console
 
+import { createClient } from "@supabase/supabase-js";
+import OpenAI from "openai";
 // Serve static frontend files
 app.use(express.static(path.join(__dirname, "..", "frontend")));
 
@@ -42,6 +44,17 @@ app.get("/", (req, res) => {
 
 // --- Health check route for Render ---
 app.get("/health", async (req, res) => {
+
+// --- Serve static frontend ---
+const frontendPath = path.join(__dirname, "..", "frontend");
+app.use(express.static(frontendPath));
+
+// Fallback to index.html for root (simple SPA pattern)
+app.get(["/", "/index.html"], (req, res, next) => {
+  // If client explicitly requests JSON at root, pass through
+  if (req.headers.accept && req.headers.accept.includes("application/json")) return next();
+  res.sendFile(path.join(frontendPath, "index.html"));
+});
   const health = {
     status: "ok",
     timestamp: new Date().toISOString(),

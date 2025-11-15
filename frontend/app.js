@@ -30,30 +30,10 @@ async function checkHealth() {
 
 function updateHealthStatus(data) {
     const status = data.status || 'error';
-    
+    // Set indicator color class only
     statusIndicator.className = `status-indicator ${status}`;
-    
-    if (status === 'ok') {
-        let healthText = '✓ System is healthy';
-        
-        // Add database info if available
-        if (data.checks?.database_info?.artist_count !== undefined) {
-            healthText += ` (${data.checks.database_info.artist_count} artists in database)`;
-        }
-        
-        statusText.textContent = healthText;
-    } else if (status === 'degraded') {
-        const issues = [];
-        if (data.checks) {
-            if (data.checks.database !== 'ok' && typeof data.checks.database !== 'object') {
-                issues.push('database');
-            }
-            if (data.checks.openai === 'not_configured') issues.push('OpenAI');
-        }
-        statusText.textContent = `⚠ System degraded: ${issues.join(', ')} issues`;
-    } else {
-        statusText.textContent = `✗ System error: ${data.error || 'Unknown error'}`;
-    }
+    // Minimal accessible text (not visually prominent)
+    statusText.textContent = status;
 }
 
 // Handle form submission
@@ -148,43 +128,27 @@ function displayResults(data) {
     
     // Display matches
     resultsGrid.innerHTML = data.matches.map((match, index) => {
-        const scorePercent = Math.round(match.final_score * 100);
-        const semanticPercent = Math.round(match.semantic_similarity * 100);
-        const historicalPercent = match.historical_success_rate 
-            ? Math.round(match.historical_success_rate * 100)
-            : 'N/A';
-        
+        const overall = Math.round((match.overall_score ?? match.final_score) * 100);
         let recommendationClass = 'risky';
-        if (match.final_score >= 0.7) recommendationClass = 'highly-recommended';
-        else if (match.final_score >= 0.5) recommendationClass = 'good-match';
-        
+        const rawScore = match.overall_score ?? match.final_score;
+        if (rawScore >= 0.7) recommendationClass = 'highly-recommended';
+        else if (rawScore >= 0.5) recommendationClass = 'good-match';
+
         return `
             <div class="result-card">
                 <h3>${index + 1}. ${match.artist_name || 'Unknown Artist'}</h3>
                 <p class="artist-tags">${match.artist_tags || 'No tags available'}</p>
-                
+
                 <div class="score-section">
                     <div class="score-item">
                         <span class="score-label">Overall Score</span>
-                        <span class="score-value">${scorePercent}%</span>
+                        <span class="score-value">${overall}%</span>
                     </div>
                     <div class="score-bar">
-                        <div class="score-fill" style="width: ${scorePercent}%"></div>
+                        <div class="score-fill" style="width: ${overall}%"></div>
                     </div>
-                    
-                    <div class="score-item">
-                        <span class="score-label">Semantic Similarity</span>
-                        <span class="score-value">${semanticPercent}%</span>
-                    </div>
-                    
-                    ${match.historical_success_rate !== null && match.historical_success_rate !== undefined ? `
-                    <div class="score-item">
-                        <span class="score-label">Historical Success Rate</span>
-                        <span class="score-value">${historicalPercent}%</span>
-                    </div>
-                    ` : ''}
                 </div>
-                
+
                 <div class="recommendation ${recommendationClass}">
                     ${match.recommendation || 'No recommendation available'}
                 </div>

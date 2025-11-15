@@ -89,9 +89,12 @@ router.post("/", async (req, res) => {
       });
     }
 
-    // 4️⃣ Decorate results with recommendation label
+    // 4️⃣ Decorate & slim results (remove semantic/historical component fields)
     const matches = (data || []).map(row => ({
-      ...row,
+      artist_id: row.artist_id,
+      artist_name: row.artist_name,
+      artist_tags: row.artist_tags,
+      overall_score: row.final_score, // renamed for clarity in client
       recommendation: recommendationLabel(row.final_score)
     }));
 

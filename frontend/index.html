@@ -13,10 +13,7 @@
             <p class="tagline">Find the perfect artist collaborators based on your style</p>
         </header>
 
-        <div class="health-status" id="healthStatus">
-            <span class="status-indicator" id="statusIndicator">●</span>
-            <span id="statusText">Checking system status...</span>
-        </div>
+        <!-- Health indicator moved to footer (minimal) -->
 
         <main>
             <section class="search-section">
@@ -118,7 +115,12 @@
         </main>
 
         <footer>
-            <p>Built with ❤️ using OpenAI Embeddings & Supabase</p>
+            <p>Built with ❤️ using OpenAI Embeddings & Supabase
+                <span class="health-min" id="healthStatus" title="Service status">
+                    <span class="status-indicator" id="statusIndicator">●</span>
+                    <span class="sr-only" id="statusText">Checking...</span>
+                </span>
+            </p>
         </footer>
     </div>
 

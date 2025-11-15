@@ -19,18 +19,10 @@ Create a `.env` file in the root directory with your credentials:
 OPENAI_API_KEY=your_openai_api_key
 SUPABASE_URL=your_supabase_url
 SUPABASE_SERVICE_KEY=your_supabase_service_key
-PORT=5000
-```
-
 ### 3. Start the Server
 
-**Development mode (with auto-reload):**
-```bash
-npm run dev
 ```
 
-**Production mode:**
-```bash
 npm start
 ```
 
@@ -95,9 +87,7 @@ The system will:
 Each match shows:
 
 ### Overall Score (0-100%)
-Combined score based on:
-- 60% Semantic Similarity (AI embedding match)
-- 40% Historical Success Rate (past collaboration data)
+Single blended score (currently 60% semantic similarity + 40% historical success). Component scores are no longer returned separately.
 
 ### Recommendation Levels
 
@@ -119,8 +109,7 @@ Combined score based on:
 ### Artist Information
 - Artist name
 - Their music tags
-- Semantic similarity percentage
-- Historical success rate (if available)
+// (Component scores removed from API – only overall score + recommendation are shown)
 
 ## 🏥 Health Check
 
@@ -147,7 +136,7 @@ The health status indicator shows:
 curl http://localhost:5000/health
 ```
 
-**Response:**
+**Response (simplified):**
 ```json
 {
   "status": "ok",
@@ -185,9 +174,7 @@ curl -X POST http://localhost:5000/match \
     {
       "artist_name": "Ariana Grande",
       "artist_tags": "contemporary r&b, dance-pop, pop, r&b",
-      "semantic_similarity": 0.892,
-      "historical_success_rate": 0.654,
-      "final_score": 0.797,
+      "overall_score": 0.797,
       "recommendation": "HIGHLY RECOMMENDED - Strong compatibility!"
     }
   ],

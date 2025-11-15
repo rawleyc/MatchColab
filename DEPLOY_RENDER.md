@@ -30,9 +30,26 @@ We include `render.yaml` at the repo root. On Render:
 Alternatively, create a Web Service manually and point to the `backend` folder, setting the same commands.
 
 ## 3) Health checks
-The server exposes:
-- GET `/health` → `{ "status": "ok" }`
-Use this path in Render health checks (already configured in `render.yaml`).
+The server exposes `GET /health` returning structured JSON like:
+```json
+{
+  "status": "ok",
+  "timestamp": "2025-11-14T12:34:56.789Z",
+  "uptime": 123.456,
+  "checks": {
+    "server": "ok",
+    "database": "ok",
+    "database_info": { "artist_count": 66 },
+    "openai": "configured"
+  }
+}
+```
+Status meanings:
+- ok: all required subsystems healthy
+- degraded: partial issues (e.g. missing OpenAI key or database error) but API responds
+- error: unexpected failure during health probe
+
+Render health check should treat only HTTP 200 as healthy. The implementation returns 503 for degraded/error to signal unhealthy deployments.
 
 ## 4) CORS
 CORS is configured to allow all origins by default if `CORS_ORIGIN` is not set. In production, set `CORS_ORIGIN` as a comma‑separated list of allowed origins so the browser can call your API:
@@ -72,6 +89,7 @@ Invoke-RestMethod -Uri "http://localhost:5000/match" -Method Post -ContentType "
 - 500 on `/match`: Make sure the Supabase SQL function `rank_artists_by_embedding` exists (apply `supabase_functions.sql` in Supabase SQL Editor).
 - CORS error in browser: Add your frontend origin to `CORS_ORIGIN`.
 - Empty matches: Lower `min_similarity` or verify embeddings stored for artists.
+- Health reports degraded: Ensure `SUPABASE_URL` & `SUPABASE_SERVICE_KEY` are set and that the `artists` table exists; add `OPENAI_API_KEY` for full functionality.
 - Invalid OpenAI key: Rotate in Render env vars and redeploy.
 
 That’s it—deploys will auto‑run on each push to `main` if you leave Auto‑Deploy enabled in Render.
