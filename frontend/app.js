@@ -115,12 +115,7 @@ function displayResults(data) {
             <div>
                 <strong>Matches Found:</strong> ${data.total_matches}
             </div>
-            <div>
-                <strong>Parameters:</strong> 
-                Top ${data.parameters.top_n}, 
-                Min Similarity: ${data.parameters.min_similarity}
-                ${data.parameters.only_successful ? ', Only Successful' : ''}
-            </div>
+            ${data.parameters.only_successful ? `<div><strong>Filter:</strong> Only successful collaborators</div>` : ''}
         </div>
     `;
     
