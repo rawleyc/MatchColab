@@ -4,12 +4,10 @@ A modern, responsive web interface for the MatchColab Artist Collaboration Match
 
 ## Features
 
-- **Real-time Health Monitoring**: Displays system status including database and OpenAI connectivity
+- **Real-time Health Monitoring**: Minimal status indicator (footer) with accessibility text
 - **Artist Matching**: Find compatible artists based on your music style tags
-- **Advanced Filtering**: 
-  - Set minimum similarity threshold
-  - Filter by successful collaboration history only
-  - Control number of results
+- **Optional Success Filter**: Toggle to restrict matches to artists with successful collaboration history
+- **Fixed Parameters**: Always returns top 10 matches with minimum similarity fixed at 0.5 (not user adjustable)
 - **Artist Profile Persistence**: Save your artist profile to the database for future matches
 - **Beautiful UI**: Modern dark theme with smooth animations and responsive design
 
@@ -49,7 +47,7 @@ When you submit the form with tags "pop, r&b", the frontend sends:
 {
   "tags": "pop, r&b",
   "top_n": 10,
-  "min_similarity": 0.3,
+  "min_similarity": 0.5,
   "only_successful": false,
   "artist_name": null,
   "persist_artist": false
@@ -66,7 +64,7 @@ The API now returns only the blended overall score (component scores removed):
   "parameters": {
     "top_n": 10,
     "only_successful": false,
-    "min_similarity": 0.3
+    "min_similarity": 0.5
   },
   "matches": [
     {

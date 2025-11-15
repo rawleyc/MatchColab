@@ -240,6 +240,7 @@ CREATE OR REPLACE FUNCTION public.rank_artists_by_embedding(
 RETURNS TABLE (
   artist_id bigint,
   artist_name text,
+  artist_tags text,
   semantic_similarity float,
   historical_success float,
   final_score float
@@ -265,6 +266,7 @@ WITH success_rates AS (
 SELECT
   a.id AS artist_id,
   a.artist_name,
+  a.artist_tags,
   (1 - (a.embedding <=> query_embedding)) AS semantic_similarity,
   COALESCE(sr.success_rate, 0.5) AS historical_success,  -- neutral prior 0.5 for unseen
   ((1 - (a.embedding <=> query_embedding)) * 0.6

@@ -42,8 +42,6 @@ matchForm.addEventListener('submit', async (e) => {
     
     const formData = new FormData(matchForm);
     const tags = formData.get('tags');
-    const topN = parseInt(formData.get('topN'));
-    const minSimilarity = parseFloat(formData.get('minSimilarity'));
     const onlySuccessful = formData.get('onlySuccessful') === 'on';
     const artistName = formData.get('artistName');
     const persistArtist = formData.get('persistArtist') === 'on';
@@ -65,8 +63,8 @@ matchForm.addEventListener('submit', async (e) => {
             },
             body: JSON.stringify({
                 tags: tags.trim(),
-                top_n: topN,
-                min_similarity: minSimilarity,
+                top_n: 10, // fixed server-side
+                min_similarity: 0.5, // fixed server-side
                 only_successful: onlySuccessful,
                 artist_name: artistName.trim() || null,
                 persist_artist: persistArtist && artistName.trim()
@@ -137,7 +135,7 @@ function displayResults(data) {
         return `
             <div class="result-card">
                 <h3>${index + 1}. ${match.artist_name || 'Unknown Artist'}</h3>
-                <p class="artist-tags">${match.artist_tags || 'No tags available'}</p>
+                <p class="artist-tags">${match.artist_tags ? match.artist_tags : ''}</p>
 
                 <div class="score-section">
                     <div class="score-item">

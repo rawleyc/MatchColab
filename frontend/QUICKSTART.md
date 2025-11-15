@@ -54,17 +54,11 @@ In the "Music Style Tags" field, enter comma-separated tags that describe your m
 - `electronic, edm, house`
 - `rock, alternative rock, indie`
 
-### Step 2: Adjust Parameters (Optional)
+### Step 2: Optional Filters
 
-**Number of Results:** How many artist matches to return (1-50)
-- Default: 10
+**Only Successful Collaborations:** Check this to filter only artists with proven collaboration success.
 
-**Min Similarity:** Minimum compatibility threshold (0-1)
-- 0.3 (default) - More results, including experimental matches
-- 0.5 - Moderate compatibility
-- 0.7 - Only highly compatible matches
-
-**Only Successful Collaborations:** Check this to filter only artists with proven collaboration success
+Number of results and minimum similarity are fixed at 10 and 0.5 respectively.
 
 ### Step 3: Save Your Profile (Optional)
 
@@ -149,14 +143,14 @@ curl http://localhost:5000/health
 }
 ```
 
-### Find Matches
+### Find Matches (Fixed parameters)
 ```bash
 curl -X POST http://localhost:5000/match \
   -H "Content-Type: application/json" \
   -d '{
     "tags": "pop, r&b",
-    "top_n": 10,
-    "min_similarity": 0.3,
+  "top_n": 10,
+  "min_similarity": 0.5,
     "only_successful": false
   }'
 ```
@@ -166,9 +160,9 @@ curl -X POST http://localhost:5000/match \
 {
   "user_tags": "pop, r&b",
   "parameters": {
-    "top_n": 10,
-    "only_successful": false,
-    "min_similarity": 0.3
+  "top_n": 10,
+  "only_successful": false,
+  "min_similarity": 0.5
   },
   "matches": [
     {

@@ -31,32 +31,7 @@
                         <small>Enter comma-separated tags describing your music style</small>
                     </div>
 
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="topN">Number of Results</label>
-                            <input 
-                                type="number" 
-                                id="topN" 
-                                name="topN" 
-                                min="1" 
-                                max="50" 
-                                value="10"
-                            >
-                        </div>
-
-                        <div class="form-group">
-                            <label for="minSimilarity">Min Similarity</label>
-                            <input 
-                                type="number" 
-                                id="minSimilarity" 
-                                name="minSimilarity" 
-                                min="0" 
-                                max="1" 
-                                step="0.1" 
-                                value="0.3"
-                            >
-                        </div>
-                    </div>
+                    <!-- Removed adjustable number of results and min similarity; fixed at 10 / 0.5 server-side -->
 
                     <div class="form-group checkbox-group">
                         <label>

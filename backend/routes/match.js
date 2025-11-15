@@ -30,9 +30,7 @@ router.post("/", async (req, res) => {
   try {
     const {
       tags,
-      top_n = 10,
       only_successful = false,
-      min_similarity = 0.3,
       persist_artist = false,
       artist_name = null
     } = req.body;
@@ -42,16 +40,9 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ error: "Tags are required" });
     }
 
-    // Validate numeric parameters
-    const topN = parseInt(top_n);
-    if (isNaN(topN) || topN < 1 || topN > 100) {
-      return res.status(400).json({ error: "top_n must be between 1 and 100" });
-    }
-
-    const minSim = parseFloat(min_similarity);
-    if (isNaN(minSim) || minSim < 0 || minSim > 1) {
-      return res.status(400).json({ error: "min_similarity must be between 0 and 1" });
-    }
+    // Fixed parameters (no longer client configurable)
+    const topN = 10;
+    const minSim = 0.5;
 
     const openai = getOpenAIClient();
     const supabase = getSupabaseClient();
