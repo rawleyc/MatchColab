@@ -80,11 +80,28 @@ router.post("/", async (req, res) => {
       });
     }
 
-    // 4️⃣ Decorate & slim results (remove semantic/historical component fields)
+    // 4️⃣ Ensure artist_tags are present: if RPC didn't include them, fetch from artists table
+    let tagsById = new Map();
+    if (Array.isArray(data) && data.length > 0) {
+      const ids = data.map(r => r.artist_id).filter(Boolean);
+      if (ids.length > 0) {
+        const { data: tagRows, error: tagErr } = await supabase
+          .from("artists")
+          .select("id, artist_tags")
+          .in("id", ids);
+        if (tagErr) {
+          console.warn("Warning: could not fetch artist tags:", tagErr.message);
+        } else if (Array.isArray(tagRows)) {
+          tagsById = new Map(tagRows.map(r => [r.id, r.artist_tags]));
+        }
+      }
+    }
+
+    // 5️⃣ Decorate & slim results (remove semantic/historical component fields)
     const matches = (data || []).map(row => ({
       artist_id: row.artist_id,
       artist_name: row.artist_name,
-      artist_tags: row.artist_tags,
+      artist_tags: row.artist_tags ?? tagsById.get(row.artist_id) ?? null,
       overall_score: row.final_score, // renamed for clarity in client
       recommendation: recommendationLabel(row.final_score)
     }));

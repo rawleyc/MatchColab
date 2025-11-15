@@ -169,12 +169,16 @@ setInterval(checkHealth, 30000);
 // Helper: format tags into badge spans
 function formatTags(tagString) {
     if (!tagString || !tagString.trim()) return '<span class="tag-badge tag-empty">No tags</span>';
-    return tagString
+    const MAX_TAGS = 4;
+    const tags = tagString
         .split(',')
         .map(t => t.trim())
-        .filter(Boolean)
-        .map(t => `<span class="tag-badge">${escapeHtml(t)}</span>`) // escape for safety
-        .join('');
+        .filter(Boolean);
+
+    const shown = tags.slice(0, MAX_TAGS).map(t => `<span class="tag-badge">${escapeHtml(t)}</span>`).join('');
+    const remaining = tags.length - MAX_TAGS;
+    const more = remaining > 0 ? `<span class="tag-badge">+${remaining} more</span>` : '';
+    return shown + more;
 }
 
 function escapeHtml(str) {
