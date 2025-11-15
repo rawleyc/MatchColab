@@ -127,10 +127,15 @@ function displayResults(data) {
         if (rawScore >= 0.7) recommendationClass = 'highly-recommended';
         else if (rawScore >= 0.5) recommendationClass = 'good-match';
 
+        const tagBadges = formatTags(match.artist_tags);
+
         return `
             <div class="result-card">
                 <h3>${index + 1}. ${match.artist_name || 'Unknown Artist'}</h3>
-                <p class="artist-tags">${match.artist_tags ? match.artist_tags : ''}</p>
+                <div class="artist-tags-wrapper">
+                    <span class="tags-label">Tags:</span>
+                    <div class="artist-tags">${tagBadges}</div>
+                </div>
 
                 <div class="score-section">
                     <div class="score-item">
@@ -160,3 +165,24 @@ checkHealth();
 
 // Refresh health every 30 seconds
 setInterval(checkHealth, 30000);
+
+// Helper: format tags into badge spans
+function formatTags(tagString) {
+    if (!tagString || !tagString.trim()) return '<span class="tag-badge tag-empty">No tags</span>';
+    return tagString
+        .split(',')
+        .map(t => t.trim())
+        .filter(Boolean)
+        .map(t => `<span class="tag-badge">${escapeHtml(t)}</span>`) // escape for safety
+        .join('');
+}
+
+function escapeHtml(str) {
+    return str.replace(/[&<>"']/g, ch => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    })[ch]);
+}
