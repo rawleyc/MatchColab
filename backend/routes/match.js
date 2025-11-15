@@ -56,11 +56,19 @@ router.post("/", async (req, res) => {
 
     // 2️⃣ (Optional) Persist querying artist so future matches can include them
     if (persist_artist && artist_name && artist_name.trim()) {
+      const record = { artist_name: artist_name.trim(), artist_tags: tags.trim(), embedding };
+      // Try upsert by artist_name (requires unique index on artist_name). Fallback to insert if upsert not supported.
       const { error: upsertError } = await supabase
         .from("artists")
-        .upsert({ artist_name: artist_name.trim(), artist_tags: tags.trim(), embedding }, { onConflict: "artist_name" });
+        .upsert(record, { onConflict: "artist_name" });
       if (upsertError) {
-        console.warn("Upsert warning:", upsertError.message);
+        console.warn("Upsert warning, attempting insert:", upsertError.message);
+        const { error: insertError } = await supabase
+          .from("artists")
+          .insert(record);
+        if (insertError) {
+          console.warn("Insert warning:", insertError.message);
+        }
       }
     }
 
@@ -80,10 +88,13 @@ router.post("/", async (req, res) => {
       });
     }
 
-    // 4️⃣ Ensure artist_tags are present: if RPC didn't include them, fetch from artists table
+    // 4️⃣ Filter out low overall score (< 0.5)
+    const filteredData = (data || []).filter(r => (r.final_score ?? 0) >= 0.5);
+
+    // 5️⃣ Ensure artist_tags are present: if RPC didn't include them, fetch from artists table
     let tagsById = new Map();
-    if (Array.isArray(data) && data.length > 0) {
-      const ids = data.map(r => r.artist_id).filter(Boolean);
+    if (Array.isArray(filteredData) && filteredData.length > 0) {
+      const ids = filteredData.map(r => r.artist_id).filter(Boolean);
       if (ids.length > 0) {
         const { data: tagRows, error: tagErr } = await supabase
           .from("artists")
@@ -97,8 +108,8 @@ router.post("/", async (req, res) => {
       }
     }
 
-    // 5️⃣ Decorate & slim results (remove semantic/historical component fields)
-    const matches = (data || []).map(row => ({
+    // 6️⃣ Decorate & slim results (remove semantic/historical component fields)
+    const matches = (filteredData || []).map(row => ({
       artist_id: row.artist_id,
       artist_name: row.artist_name,
       artist_tags: row.artist_tags ?? tagsById.get(row.artist_id) ?? null,

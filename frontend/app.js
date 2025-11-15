@@ -102,7 +102,7 @@ function displayResults(data) {
     errorSection.style.display = 'none';
     
     if (!data.matches || data.matches.length === 0) {
-        showError('No matches found. Try adjusting your tags or lowering the minimum similarity.');
+        showError('No matches found (>= 50%). Try different tags or broaden your style description.');
         return;
     }
     
