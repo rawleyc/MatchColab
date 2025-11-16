@@ -112,9 +112,6 @@ function displayResults(data) {
             <div>
                 <strong>Your Tags:</strong> ${data.user_tags}
             </div>
-            <div>
-                <strong>Matches Found:</strong> ${data.total_matches}
-            </div>
             ${data.parameters.only_successful ? `<div><strong>Filter:</strong> Only successful collaborators</div>` : ''}
         </div>
     `;
